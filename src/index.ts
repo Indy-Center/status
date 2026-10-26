@@ -1,11 +1,15 @@
 import { checkMorning, handlePing } from './backups';
 import { runChecks } from './checks';
+import { renderPage } from './page';
 import { WATCH_LIST } from './watch-list';
 
 export default {
 	async fetch(request, env, _ctx): Promise<Response> {
 		const { pathname } = new URL(request.url);
 		if (pathname === '/backup-finished') return handlePing(request, env);
+		if (pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
+			return renderPage(env, WATCH_LIST);
+		}
 		return new Response('Not found', { status: 404 });
 	},
 
