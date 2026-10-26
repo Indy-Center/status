@@ -1,0 +1,36 @@
+name: Tests and Verification
+
+# No push trigger: on main, CI runs inside build-and-deploy.yml, so it runs once per commit.
+on:
+  pull_request:
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run format:check
+
+      - run: npm run typecheck
+
+      - run: npm test
+
+      # Bundles the Worker without uploading it, so a bad wrangler.jsonc or import fails here, not at deploy.
+      - name: Worker bundles
+        run: npx wrangler deploy --dry-run --outdir dist-check
