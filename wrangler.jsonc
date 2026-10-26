@@ -1,0 +1,32 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "status",
+	"main": "src/index.ts",
+	"account_id": "afd63515948c9b2188ce14ef1504b2c1",
+	"compatibility_date": "2026-10-01",
+	"observability": {
+		"enabled": true
+	},
+	"routes": [{ "pattern": "status.flyindycenter.com", "custom_domain": true }],
+	// Every five minutes: run the checks in src/watch-list.ts and the morning backup check.
+	"triggers": {
+		"crons": ["0-59/5 * * * *"]
+	},
+	// Each check's state and each server's last backup ping. Written only when something changes.
+	"kv_namespaces": [
+		{
+			"binding": "STATUS",
+			// PLACEHOLDER: create the namespace with `npx wrangler kv namespace create status`
+			// and paste its id here before the first deploy.
+			"id": "REPLACE_WITH_STATUS_KV_NAMESPACE_ID"
+		}
+	],
+	"vars": {
+		// Hour (UTC, 0-23) by which every server that has pinged before must have pinged today.
+		// The runner's report goes out from 07:00 UTC, and the ping follows it once the recipes finish.
+		"BACKUP_DEADLINE_HOUR_UTC": "9"
+	}
+	// Secrets (never here): STATUS_PING_TOKEN and DISCORD_STATUS_ALERT_WEBHOOK, set by
+	// build-and-deploy.yml from the ENV_STATUS_PING_TOKEN and ENV_DISCORD_STATUS_ALERT_WEBHOOK
+	// repo secrets. For wrangler dev, put them in .dev.vars (see .dev.vars.example).
+}

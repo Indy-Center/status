@@ -1,0 +1,5 @@
+# For wrangler dev: copy to .dev.vars (gitignored) and fill in.
+# The runner's "backup finished" secret. Any string will do locally.
+STATUS_PING_TOKEN=local-test-token
+# A Discord webhook for alerts. Use a test channel's webhook, never tech-team-alerts'.
+DISCORD_STATUS_ALERT_WEBHOOK=
