@@ -16,9 +16,7 @@
 	"kv_namespaces": [
 		{
 			"binding": "STATUS",
-			// PLACEHOLDER: create the namespace with `npx wrangler kv namespace create status`
-			// and paste its id here before the first deploy.
-			"id": "REPLACE_WITH_STATUS_KV_NAMESPACE_ID"
+			"id": "cc7a4c506c1f4f3abf131a960220564c"
 		}
 	],
 	"vars": {
