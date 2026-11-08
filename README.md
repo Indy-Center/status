@@ -9,7 +9,7 @@ A Cloudflare Worker at [status.flyindycenter.com](https://status.flyindycenter.c
 
 The watch list is [`src/watch-list.ts`](src/watch-list.ts): the public `*.flyindycenter.com` sites, the CMS, and TeamSpeak's TCP port.
 
-- **A site** is up when it answers with any HTTP status below 500 within 10 seconds. A redirect or a sign-in page counts as up: the check asks whether the site is answering, not whether the page is right. Redirects aren't followed.
+- **A site** is up when it answers with an HTTP status below 400 within 10 seconds. A redirect or a sign-in page counts as up: the check asks whether the site is answering, not whether the page is right. Redirects aren't followed. A 4xx counts as down, because Traefik answers 404 for a VPS app whose container has stopped, so a watched URL must answer 2xx or 3xx when the app is healthy.
 - **A TCP port** is up when a connection opens within 10 seconds. TeamSpeak's voice port is UDP, which a Worker can't check, so the file-transfer port (30033) stands in for it. Its host must stay DNS-only: a Worker can't open a TCP connection to an address Cloudflare proxies.
 - A failed check is tried once more straight away before it counts as down.
 

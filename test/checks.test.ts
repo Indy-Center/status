@@ -120,8 +120,8 @@ describe('the scheduled checks', () => {
 		expect((await readChecks(env))['Site B']?.up).toBe(false);
 	});
 
-	it('counts any answer below 500 as up, since the site is answering', async () => {
-		net.site(SITE_A, 404);
+	it('counts a redirect as up, since the site is answering', async () => {
+		net.site(SITE_A, 200);
 		net.site(SITE_B, 302);
 
 		await runChecks(env, T0, LIST);
@@ -130,6 +130,17 @@ describe('the scheduled checks', () => {
 		expect(state['Site A']?.up).toBe(true);
 		expect(state['Site B']?.up).toBe(true);
 		expect(net.alerts).toEqual([]);
+	});
+
+	it("counts a 404 as down, as Traefik answers for a stopped container", async () => {
+		await runChecks(env, T0, LIST);
+		net.site(SITE_A, 404);
+
+		await runChecks(env, minutesAfter(5), LIST);
+
+		expect((await readChecks(env))['Site A']?.up).toBe(false);
+		expect(net.alerts).toHaveLength(1);
+		expect(net.alerts[0]).toContain('Site A');
 	});
 
 	it('tries a failed check once more before calling it down', async () => {

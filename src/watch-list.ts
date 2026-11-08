@@ -1,8 +1,10 @@
 /**
  * What the status page watches. Each check is a site, checked over HTTPS, or a TCP port.
  *
- * - A site is up when it answers with any status below 500 within the timeout. A redirect or a
+ * - A site is up when it answers with a status below 400 within the timeout. A redirect or a
  *   sign-in page still counts as up: the check asks "is it answering?", not "is the page right?".
+ *   A 4xx counts as down, since Traefik answers 404 for an app whose container has stopped, so
+ *   point each URL at a path that answers 2xx or 3xx when the app is healthy.
  * - A TCP port is up when a connection opens within the timeout.
  *
  * The name is what the page and the alerts show, and is how the Worker remembers each check's

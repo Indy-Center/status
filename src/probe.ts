@@ -24,7 +24,9 @@ async function probeSite(url: string): Promise<ProbeResult> {
 			signal: AbortSignal.timeout(TIMEOUT_MS)
 		});
 		await response.body?.cancel();
-		return { up: response.status < 500, detail: `HTTP ${response.status}` };
+		// Below 400: a redirect or sign-in page is an answer. A 4xx is not: Traefik answers
+		// 404 for an app whose container has stopped.
+		return { up: response.status < 400, detail: `HTTP ${response.status}` };
 	} catch (error) {
 		return { up: false, detail: describe(error) };
 	}
