@@ -132,7 +132,7 @@ describe('the scheduled checks', () => {
 		expect(net.alerts).toEqual([]);
 	});
 
-	it("counts a 404 as down, as Traefik answers for a stopped container", async () => {
+	it('counts a 404 as down, as Traefik answers for a stopped container', async () => {
 		await runChecks(env, T0, LIST);
 		net.site(SITE_A, 404);
 
