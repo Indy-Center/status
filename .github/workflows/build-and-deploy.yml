@@ -1,0 +1,50 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.event.repository.name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  build-and-deploy:
+    needs: ci # skipped if any check fails
+    runs-on: ubuntu-latest
+    env:
+      # Org secret shared with this repo: a Cloudflare token with Workers Scripts:Edit and
+      # Workers KV Storage:Edit.
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Deploy
+        run: npx wrangler deploy
+
+      # The Worker's two secrets, from repo secrets of the same name with ENV_ in front. Re-set on
+      # every deploy, so changing one is updating the repo secret and re-running this workflow.
+      # Each goes in on stdin, never on the command line.
+      - name: Set STATUS_PING_TOKEN
+        env:
+          VALUE: ${{ secrets.ENV_STATUS_PING_TOKEN }}
+        run: printf '%s' "$VALUE" | npx wrangler secret put STATUS_PING_TOKEN
+
+      - name: Set DISCORD_STATUS_ALERT_WEBHOOK
+        env:
+          VALUE: ${{ secrets.ENV_DISCORD_STATUS_ALERT_WEBHOOK }}
+        run: printf '%s' "$VALUE" | npx wrangler secret put DISCORD_STATUS_ALERT_WEBHOOK

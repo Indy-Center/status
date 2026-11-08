@@ -1,0 +1,5 @@
+node_modules/
+.wrangler/
+dist-check/
+package-lock.json
+worker-configuration.d.ts
