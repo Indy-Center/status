@@ -177,6 +177,65 @@ describe('the scheduled checks', () => {
 		expect(net.alerts[1]).toMatch(/back up/i);
 	});
 
+	describe('with downAfter', () => {
+		const SLOW: Check[] = [{ name: 'Voice', host: 'voice.example.com', port: 30033, downAfter: 3 }];
+
+		it('stays up, without alerting, until it has failed that many runs in a row', async () => {
+			await runChecks(env, T0, SLOW);
+			closedPorts.add('voice.example.com:30033');
+
+			await runChecks(env, minutesAfter(5), SLOW);
+			await runChecks(env, minutesAfter(10), SLOW);
+
+			expect(net.alerts).toEqual([]);
+			expect((await readChecks(env))['Voice']).toMatchObject({
+				up: true,
+				since: T0.toISOString(),
+				failing: { runs: 2, since: minutesAfter(5).toISOString() }
+			});
+		});
+
+		it('goes down on the last of those runs, counting the outage from the first', async () => {
+			await runChecks(env, T0, SLOW);
+			closedPorts.add('voice.example.com:30033');
+			await runChecks(env, minutesAfter(5), SLOW);
+			await runChecks(env, minutesAfter(10), SLOW);
+
+			await runChecks(env, minutesAfter(15), SLOW);
+			expect(net.alerts).toHaveLength(1);
+			expect(net.alerts[0]).toMatch(/Voice.*down/);
+			expect((await readChecks(env))['Voice']).toEqual({
+				up: false,
+				since: minutesAfter(5).toISOString(),
+				detail: 'connection refused'
+			});
+
+			closedPorts.clear();
+			await runChecks(env, minutesAfter(20), SLOW);
+			expect(net.alerts[1]).toContain('back up after 15 min');
+		});
+
+		it('starts counting again after a run that passes', async () => {
+			await runChecks(env, T0, SLOW);
+			closedPorts.add('voice.example.com:30033');
+			await runChecks(env, minutesAfter(5), SLOW);
+			await runChecks(env, minutesAfter(10), SLOW);
+			closedPorts.clear();
+			await runChecks(env, minutesAfter(15), SLOW);
+			expect((await readChecks(env))['Voice']).toEqual({
+				up: true,
+				since: T0.toISOString(),
+				detail: 'port 30033 open'
+			});
+
+			closedPorts.add('voice.example.com:30033');
+			await runChecks(env, minutesAfter(20), SLOW);
+			await runChecks(env, minutesAfter(25), SLOW);
+
+			expect(net.alerts).toEqual([]);
+		});
+	});
+
 	it('still records a change when Discord is down', async () => {
 		await runChecks(env, T0, LIST);
 		net.discordDown(true);

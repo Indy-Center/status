@@ -5,8 +5,8 @@ import type { Check } from './watch-list';
 
 /**
  * Runs every check, and alerts tech-team-alerts when one goes down or comes back. State is written
- * only when a check changes, so a quiet run costs no KV writes and a check that stays down alerts
- * once.
+ * only when a check changes, or adds to a run of failures that isn't yet long enough to count as
+ * down, so a quiet run costs no KV writes and a check that stays down alerts once.
  */
 export async function runChecks(env: Env, now: Date, list: Check[]): Promise<void> {
 	const before = await readChecks(env);
@@ -18,11 +18,29 @@ export async function runChecks(env: Env, now: Date, list: Check[]): Promise<voi
 	const alerts: string[] = [];
 	for (const { check, up, detail } of results) {
 		const previous = before[check.name];
+		if (previous?.up && up) {
+			// A pass ends any run of failures.
+			after[check.name] = { up, since: previous.since, detail: previous.detail };
+			continue;
+		}
 		if (previous && previous.up === up) {
 			after[check.name] = previous;
 			continue;
 		}
-		after[check.name] = { up, since: now.toISOString(), detail };
+		let since = now.toISOString();
+		if (previous?.up && !up) {
+			const failing = {
+				runs: (previous.failing?.runs ?? 0) + 1,
+				since: previous.failing?.since ?? since
+			};
+			if (failing.runs < (check.downAfter ?? 1)) {
+				after[check.name] = { ...previous, failing };
+				continue;
+			}
+			// Down from the first failure, so "back up after" counts the whole outage.
+			since = failing.since;
+		}
+		after[check.name] = { up, since, detail };
 		if (!up) {
 			alerts.push(`🔴 **${check.name}** is down: ${detail} (${target(check)})`);
 		} else if (previous) {
@@ -44,6 +62,7 @@ function changed(before: ChecksState, after: ChecksState): boolean {
 		const a = before[name];
 		const b = after[name];
 		if (!a || !b || a.up !== b.up || a.since !== b.since) return true;
+		if (a.failing?.runs !== b.failing?.runs) return true;
 	}
 	return false;
 }

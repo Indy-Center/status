@@ -13,6 +13,11 @@ export type CheckState = {
 	since: string;
 	/** What the last change saw, such as "HTTP 502" or "connection refused". */
 	detail: string;
+	/**
+	 * For a check that is up but has failed its last runs, without enough of them in a row yet to
+	 * count as down (see `downAfter` in the watch list): how many runs, and when the first was.
+	 */
+	failing?: { runs: number; since: string };
 };
 
 /** Check name → state. */
