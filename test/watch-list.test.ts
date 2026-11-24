@@ -34,12 +34,9 @@ describe('the watch list', () => {
 		}
 	});
 
-	it('includes the CMS and a TCP check for TeamSpeak', () => {
+	it('includes the CMS', () => {
 		expect(WATCH_LIST).toContainEqual(
 			expect.objectContaining({ url: 'https://cms.flyindycenter.com/' })
-		);
-		expect(WATCH_LIST).toContainEqual(
-			expect.objectContaining({ name: 'TeamSpeak', port: expect.any(Number) })
 		);
 	});
 

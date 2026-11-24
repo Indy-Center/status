@@ -31,10 +31,14 @@ export const WATCH_LIST: Check[] = [
 	{ name: 'CMS', url: 'https://cms.flyindycenter.com/' },
 	{ name: 'Wiki', url: 'https://wiki.flyindycenter.com/' },
 	{ name: 'Social (Postiz)', url: 'https://social.flyindycenter.com/' },
-	{ name: 'Moodle', url: 'https://moodle.flyindycenter.com/' },
+	{ name: 'Moodle', url: 'https://moodle.flyindycenter.com/' }
 
 	// TeamSpeak's file-transfer port. Voice is UDP (9987), which a Worker cannot check, so this
 	// TCP port stands in for "the server is up". The host must stay DNS-only (not proxied):
 	// a Worker cannot open a TCP connection to a Cloudflare-proxied address.
-	{ name: 'TeamSpeak', host: 'ts.flyzid.org', port: 30033 }
+	//
+	// Off for now: since TeamSpeak moved to ALEXANDRIA (2026-11-23), the Worker's connections to
+	// 30033 time out now and then while the server is up, so the check posts false down alerts.
+	// Turn it back on once the check is reliable.
+	// { name: 'TeamSpeak', host: 'ts.flyzid.org', port: 30033 }
 ];
